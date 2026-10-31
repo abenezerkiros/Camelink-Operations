@@ -1,0 +1,13 @@
+node_modules/
+.next/
+out/
+.env*
+!.env.example
+*.log
+.DS_Store
+backend/.env.*
+!backend/.env.example
+backend/.secret.local
+backend/lib/
+*-debug.log
+firestore-debug.log

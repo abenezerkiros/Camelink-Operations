@@ -1,0 +1,19 @@
+rules_version = '2';
+service cloud.firestore {
+ match /databases/{database}/documents {
+  function signedIn(){return request.auth != null;}
+  function operator(){return signedIn() && (request.auth.token.get('operator',false) == true || request.auth.token.get('admin',false) == true) && exists(/databases/$(database)/documents/operators/$(request.auth.uid)) && get(/databases/$(database)/documents/operators/$(request.auth.uid)).data.enabled == true;}
+  function driverEnabled(){return signedIn() && exists(/databases/$(database)/documents/drivers/$(request.auth.uid)) && get(/databases/$(database)/documents/drivers/$(request.auth.uid)).data.enabled == true;}
+  match /operators/{uid} {allow get: if signedIn() && request.auth.uid==uid;allow list,write: if false;}
+  match /customers/{uid} {allow read: if operator() || (signedIn() && request.auth.uid == uid);allow write: if false;}
+  match /customerShipments/{id} {allow read: if operator() || (signedIn() && resource.data.customerId == request.auth.uid);allow write: if false;}
+  match /drivers/{uid} {allow read: if operator() || (signedIn() && request.auth.uid == uid);allow write: if false;}
+  match /driverTrips/{id} {allow read: if operator() || (driverEnabled() && resource.data.driverId == request.auth.uid);allow write: if false;}
+  match /operationsShipments/{id} {allow read: if operator();allow write: if false;}
+  match /driverLocations/{id} {allow read: if operator();allow write: if false;}
+  match /trucks/{id} {allow read: if operator();allow write: if false;}
+  match /auditLogs/{id} {allow read: if operator();allow write: if false;}
+  // OTP challenges, command deduplication, phone lookups, tokens and secrets are never readable from any client.
+  match /{document=**} {allow read,write: if false;}
+ }
+}
